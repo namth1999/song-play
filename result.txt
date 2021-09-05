@@ -1,0 +1,10 @@
+[1m[31m=== Mapping to 8 mappers with chunk size 1... ===[0m
+[1m[31m=== Mapper returned 501 keys ===[0m
+[1m[31m=== Reducing using 8 reducers... ===[0m
+[1m[31m=== Reducer finished ===[0m
+The 5 Songs played the most at 7 to 8
+Nina se réveille	Ours	3
+A Cotton Pickers Dream	Current	3
+1.000 Euro Al Mese	Daniele Silvestri	3
+Danzón for My Father	Spanish Harlem Orchestra	3
+Storm	Inkubus Sukkubus	2
