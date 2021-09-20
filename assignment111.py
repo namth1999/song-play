@@ -6,8 +6,8 @@ from map_reduce_lib import *
 from datetime import datetime
 
 def mapper(line):
-    """ Map function for the word count job.
-    Splits line into words, removes low information words (i.e. stopwords) and outputs (key, 1).
+    """ Map function for the listen count job.
+    Read from play_history file and splits line into track_id, user, date_time
     """
     # process_print('is processing `%s`' % line)
     output = []
@@ -20,8 +20,8 @@ def mapper(line):
 
 
 def reducer(key_value_item):
-    """ Reduce function for the word count job.
-    Converts partitioned shakespear (key, [value]) to a summary of form (key, value).
+    """ Reducer function for the listen count job.
+    Sum the count
     """
     key, counts = key_value_item
     return key, sum(counts)
@@ -34,6 +34,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         print('Please provide a text-file that you want to perform the wordcount on as a command line argument.')
         sys.exit(-1)
+    # process whether the input is a dir or a file
     elif os.path.isdir(sys.argv[1]):
         filenames = next(walk(sys.argv[1]), (None, None, []))[2]
         for fn in filenames:

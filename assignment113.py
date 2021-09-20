@@ -9,8 +9,8 @@ start_hour = 7
 end_hour = 8
 
 def mapper(line):
-    """ Map function for the word count job.
-    Splits line into words, removes low information words (i.e. stopwords) and outputs (key, 1).
+    """ Map function for the listen count job.
+    Read all the file and extract needed data
     """
     # process_print('is processing `%s`' % line)
     output = []
@@ -26,12 +26,12 @@ def mapper(line):
         # ...if it is part of tracks, which has 4 lines
         elif len(data) == 4:
             track_id, artist, title, length_seconds = data
-            # ...write the relevant lines to the standard output
             output.append((track_id, '%s,%s,%s' % ('A', title, artist)))
         elif len(data) > 4:
             is_people = False
             if len(data) == 7 and (data[4] == 'Male' or data[4] == 'Female'):
                 is_people = True
+            # Handle tracks with one or many ',' in its title
             if not is_people:
                 start_title_index = line.find(",\"")
                 end_title_index = line.find("\",")
@@ -43,14 +43,15 @@ def mapper(line):
 
 
 def reducer(key_value_item):
-    """ Reduce function for the word count job.
-    Converts partitioned shakespear (key, [value]) to a summary of form (key, value).
+    """ Reducer function for the listen count job.
+    Return 5 songs played the most
     """
     title = ""
     artist = ""
     play_times = -1
     result = []
     key, values = key_value_item
+    # extract data
     if len(values) > 1:
         for v in values:
             if "A" in v[0]:
@@ -78,6 +79,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         print('Please provide a text-file that you want to perform the wordcount on as a command line argument.')
         sys.exit(-1)
+    # process whether the input is a dir or a file
     elif os.path.isdir(sys.argv[1]):
         filenames = next(walk(sys.argv[1]), (None, None, []))[2]
         for fn in filenames:
@@ -95,6 +97,7 @@ if __name__ == '__main__':
     listen_counts = map_reduce(file_contents, debug=True)
     an_iterator = filter(not_None, listen_counts)
     listen_counts = list(an_iterator)
+    # get the top 5 songs
     listen_counts.sort(key = lambda x: x[2], reverse=True)
     top_5 = listen_counts[0:5]
     print('The 5 Songs played the most at {0} to {1}'.format(start_hour, end_hour))

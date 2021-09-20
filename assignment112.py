@@ -7,14 +7,14 @@ from datetime import datetime
 
 
 def mapper(line):
-    """ Map function for the word count job.
-    Splits line into words, removes low information words (i.e. stopwords) and outputs (key, 1).
+    """ Map function for the listen count job.
+    Read from play_history, people file and splits line into track_id, user, date_time
     """
     # process_print('is processing `%s`' % line)
     output = []
     data = line.split(',')
     if data[0] != 'track_id' and data[0] != 'id':
-        # ...if it is part of playhistory, which has 5 columns
+        # ...if it is part of play_history, which has 3 columns
         if len(data) == 3:
             track_id, user, dtime = data
             # ...write the relevant lines to the standard output
@@ -27,8 +27,8 @@ def mapper(line):
 
 
 def reducer(key_value_item):
-    """ Reduce function for the word count job.
-    Converts partitioned shakespear (key, [value]) to a summary of form (key, value).
+    """ Reducer function for the listen count job.
+    Return the hour that listen most
     """
     result = []
 
@@ -36,6 +36,7 @@ def reducer(key_value_item):
     current_last_name = ""
     play_history = []
     current_people_id, values = key_value_item
+    # extract the data from mapper result
     for v in values:
         data = v.split(',')
         if data[0] == 'P':
@@ -43,10 +44,11 @@ def reducer(key_value_item):
             current_last_name = data[2]
         elif data[0] == 'PH':
             play_history.append(data[1])
-
+    # sort by the listened times for each track_id
     listen_times = dict((i, play_history.count(i)) for i in play_history)
     listen_times = sorted(listen_times.items(), key=lambda item: item[1], reverse=True)
 
+    # extract the song info and the counts from the sorted dict
     count = listen_times[0][1]
     for lt in listen_times:
         if lt[1] == count:
@@ -62,6 +64,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         print('Please provide a text-file that you want to perform the wordcount on as a command line argument.')
         sys.exit(-1)
+    # process whether the input is a dir or a file
     elif os.path.isdir(sys.argv[1]):
         filenames = next(walk(sys.argv[1]), (None, None, []))[2]
         for fn in filenames:

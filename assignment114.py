@@ -7,8 +7,8 @@ from datetime import datetime
 
 
 def mapper_combine_tracks_ph(line):
-    """ Map function for the word count job.
-    Splits line into words, removes low information words (i.e. stopwords) and outputs (key, 1).
+    """ Map function for the combine job.
+    Read tracks, playhistory and and extract needed data
     """
     # process_print('is processing `%s`' % line)
     output = []
@@ -23,7 +23,6 @@ def mapper_combine_tracks_ph(line):
         # ...if it is part of tracks, which has 4 lines
         elif len(data) == 4:
             track_id, artist, title, length_seconds = data
-            # ...write the relevant lines to the standard output
             output.append((track_id, '%s,%s' % ('T', artist)))
         elif len(data) > 4:
             is_people = False
@@ -36,8 +35,8 @@ def mapper_combine_tracks_ph(line):
 
 
 def reducer_combine_tracks_ph(key_value_item):
-    """ Reduce function for the word count job.
-    Converts partitioned shakespear (key, [value]) to a summary of form (key, value).
+    """ Reduce function for the combine job.
+    Join data from table tracks and playhistory
     """
     artist = ""
 
@@ -50,6 +49,9 @@ def reducer_combine_tracks_ph(key_value_item):
 
 
 def mapper_count(line):
+    """ Map function for the count job.
+        Read from file_contents all the find and and extract needed data
+        """
     output = []
     data = line.split(',')
     if data[0] != 'track_id' and data[0] != 'id':
@@ -67,9 +69,14 @@ def mapper_count(line):
 
 
 def reducer_count(key_value_item):
+    """ Reduce function for the combine job.
+        Join data from last mapper reducer result and people table
+        Count the listened the most artist
+    """
     artists = []
     key, values = key_value_item
     first_name, last_name = values[0].split(',')
+    # listend times
     records = values[1:]
     records_dict = dict((i, records.count(i)) for i in records)
     records = sorted(records_dict.items(), key=lambda item: item[1], reverse=True)
@@ -88,6 +95,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         print('Please provide a text-file that you want to perform the wordcount on as a command line argument.')
         sys.exit(-1)
+    # process whether the input is a dir or a file
     elif os.path.isdir(sys.argv[1]):
         filenames = next(walk(sys.argv[1]), (None, None, []))[2]
         for fn in filenames:
@@ -103,15 +111,15 @@ if __name__ == '__main__':
     # Execute MapReduce job in parallel.
     combine_map_reduce = MapReduce(mapper_combine_tracks_ph, reducer_combine_tracks_ph, 8)
     combine_result = combine_map_reduce(file_contents, debug=True)
+    # append the combine result to file_contents
     for result in combine_result:
         artist = result[0]
         for listen in result[1]:
             symbol, user = listen.split(',')
             file_contents.append('%s,%s' % (artist, user))
-
+    # take the appended file_contetns for result
     count_map_reduce = MapReduce(mapper_count, reducer_count, 8)
     count_result = count_map_reduce(file_contents, debug=True)
-    # for result in combine_result:
 
     print('Artist each user listened the most to:')
     for firstname, lastname, artists, count in count_result:
