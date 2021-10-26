@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import sys
+import operator
 from os import walk
 import os.path
 from map_reduce_lib import *
@@ -50,6 +51,9 @@ if __name__ == '__main__':
     # Execute MapReduce job in parallel.
     map_reduce = MapReduce(mapper, reducer, 8)
     listen_counts = map_reduce(file_contents, debug=True)
+
+    # Sort the listen_counts by track_id
+    listen_counts.sort(key=operator.itemgetter(0))
 
     print('How often songs were listened on March 2015:')
     for word, count in listen_counts:
